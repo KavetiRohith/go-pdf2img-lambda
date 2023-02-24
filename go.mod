@@ -1,4 +1,4 @@
-module github.com/KavetiRohith/go-pdf-processor
+module github.com/KavetiRohith/go-pdf2img-lambda
 
 go 1.19
 
