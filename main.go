@@ -120,7 +120,9 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 	for _, record := range s3Event.Records {
 		s3 := record.S3
 		err := ConvertToPdf(ctx, s3.Object.Key, s3.Bucket.Name, s3Client)
-		log.Printf("Unable to convert pdf %s to image err: %s\n", s3.Object.Key, err)
+		if err != nil {
+			log.Printf("Unable to convert pdf %s to image err: %s\n", s3.Object.Key, err)
+		}
 	}
 }
 
