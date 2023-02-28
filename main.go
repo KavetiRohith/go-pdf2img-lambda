@@ -20,10 +20,8 @@ import (
 	"github.com/gen2brain/go-fitz"
 )
 
-func DownloadS3File(ctx context.Context, objectKey string, bucket string, s3Client *s3.Client) ([]byte, error) {
+func DownloadS3File(ctx context.Context, downloader *manager.Downloader, objectKey string, bucket string) ([]byte, error) {
 	buffer := manager.NewWriteAtBuffer([]byte{})
-
-	downloader := manager.NewDownloader(s3Client)
 
 	numBytes, err := downloader.Download(ctx, buffer, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
@@ -40,8 +38,7 @@ func DownloadS3File(ctx context.Context, objectKey string, bucket string, s3Clie
 	return buffer.Bytes(), nil
 }
 
-func UploadToS3(ctx context.Context, image *bytes.Buffer, objectKey string, bucket string, s3Client *s3.Client) error {
-	uploader := manager.NewUploader(s3Client)
+func UploadToS3(ctx context.Context, uploader *manager.Uploader, image *bytes.Buffer, objectKey string, bucket string) error {
 
 	_, err := uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
@@ -52,8 +49,8 @@ func UploadToS3(ctx context.Context, image *bytes.Buffer, objectKey string, buck
 	return err
 }
 
-func ConvertToPdf(ctx context.Context, objectKey string, bucket string, s3Client *s3.Client) error {
-	pdfBytes, err := DownloadS3File(ctx, objectKey, bucket, s3Client)
+func ConvertToPdf(ctx context.Context, downloader *manager.Downloader, uploader *manager.Uploader, objectKey string, bucket string) error {
+	pdfBytes, err := DownloadS3File(ctx, downloader, objectKey, bucket)
 	if err != nil {
 		return err
 	}
@@ -98,7 +95,7 @@ func ConvertToPdf(ctx context.Context, objectKey string, bucket string, s3Client
 				return
 			}
 
-			err = UploadToS3(ctx, imgBuffer, fmt.Sprintf("%s-%v.jpeg", imgPrefix, n+1), bucket, s3Client)
+			err = UploadToS3(ctx, uploader, imgBuffer, fmt.Sprintf("%s-%v.jpeg", imgPrefix, n+1), bucket)
 			if err != nil {
 				log.Printf("Unable to Upload image %s-%v.jpeg to s3 err: %v\n", imgPrefix, n+1, err)
 				return
@@ -117,9 +114,13 @@ func handler(ctx context.Context, s3Event events.S3Event) {
 	}
 
 	s3Client := s3.NewFromConfig(cfg)
+
+	downloader := manager.NewDownloader(s3Client)
+	uploader := manager.NewUploader(s3Client)
+
 	for _, record := range s3Event.Records {
 		s3 := record.S3
-		err := ConvertToPdf(ctx, s3.Object.Key, s3.Bucket.Name, s3Client)
+		err := ConvertToPdf(ctx, downloader, uploader, s3.Object.Key, s3.Bucket.Name)
 		if err != nil {
 			log.Printf("Unable to convert pdf %s to image err: %s\n", s3.Object.Key, err)
 		}
