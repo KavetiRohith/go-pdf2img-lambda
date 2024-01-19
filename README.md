@@ -71,8 +71,11 @@ Follow these steps to deploy the Lambda service:
    ```bash
    zip lambda-handler.zip bootstrap
    ```
-
-
+4. For deployment and additional information
+    - https://docs.aws.amazon.com/lambda/latest/dg/golang-package.html#golang-package-mac-linux
+    - https://docs.aws.amazon.com/lambda/latest/dg/with-s3-example.html
+    
+    
 ## Usage
 
 Once the Lambda function is deployed, it will automatically trigger whenever a new PDF file is uploaded to the associated S3 bucket. The PDF file will be split into images, and the resulting images will be stored in the same S3 bucket.
@@ -81,6 +84,8 @@ Once the Lambda function is deployed, it will automatically trigger whenever a n
 
 - [gen2brain/go-fitz](https://github.com/gen2brain/go-fitz): Go wrapper for the libmupdf C library.
 - [Zig](https://ziglang.org/): Used to compile static binaries for the Lambda service.
+- [aws-lambda-go sdk](github.com/aws/aws-lambda-go)
+- [aws-sdk-go-v2](github.com/aws/aws-sdk-go-v2)
 
 ## Notes
 
